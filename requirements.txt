@@ -1,0 +1,19 @@
+# Reconhecimento facial
+deepface
+tf-keras
+
+# Captura de vídeo e processamento de imagem
+opencv-python
+numpy
+
+# Liveness detection (Eye Blink)
+mediapipe
+
+# Comunicação Serial com Arduino
+pyserial
+
+# Classificador para modelo treinado
+scikit-learn
+
+# Testes
+pytest
