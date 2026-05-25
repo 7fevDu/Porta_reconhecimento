@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# IDEs
+.vscode/settings.json
+.idea/
+
+# Dados de teste e temporários
+data_base/users/Teste/
+
+# Variáveis de ambiente
+.env
+.env.*
+
+# pytest
+.pytest_cache/

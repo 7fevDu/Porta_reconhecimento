@@ -12,7 +12,6 @@ Fluxo:
 import json
 import logging
 import numpy as np
-from pathlib import Path
 from deepface import DeepFace
 
 from src.config import (
@@ -27,19 +26,10 @@ from src.config import (
 log = logging.getLogger(__name__)
 
 
-def _cosine_distance(a: np.ndarray, b: np.ndarray) -> float:
-    """Distância cosseno entre dois vetores 1-D."""
-    norm_a = np.linalg.norm(a)
-    norm_b = np.linalg.norm(b)
-    if norm_a == 0 or norm_b == 0:
-        return 1.0
-    return float(1.0 - np.dot(a, b) / (norm_a * norm_b))
-
-
 class FaceRecognizer:
     def __init__(self) -> None:
-        # dict: nome → array (N, 512)
         self._embeddings: dict[str, np.ndarray] = {}
+        self._norms: dict[str, np.ndarray] = {}   # normas pré-computadas por usuário
         self._load_embeddings()
 
     # ── Inicialização ─────────────────────────────────────────────────────────
@@ -59,7 +49,9 @@ class FaceRecognizer:
             if not npy_path.exists():
                 log.warning(f"Arquivo de embeddings não encontrado: {npy_path}")
                 continue
-            self._embeddings[user["name"]] = np.load(str(npy_path))
+            emb = np.load(str(npy_path))
+            self._embeddings[user["name"]] = emb
+            self._norms[user["name"]] = np.linalg.norm(emb, axis=1)
             log.info(
                 f"  Carregado: {user['name']} "
                 f"({user['num_embeddings']} embeddings)"
@@ -94,6 +86,21 @@ class FaceRecognizer:
     def authorized_users(self) -> list[str]:
         return list(self._embeddings.keys())
 
+    def warmup(self) -> None:
+        """Aquece o modelo DeepFace com uma imagem dummy para evitar lentidão na 1ª chamada real."""
+        dummy = np.zeros((160, 160, 3), dtype=np.uint8)
+        try:
+            DeepFace.represent(
+                img_path=dummy,
+                model_name=FACENET_MODEL,
+                detector_backend=DETECTOR_BACKEND,
+                enforce_detection=False,
+                align=False,
+            )
+            log.info("Warmup do modelo concluído.")
+        except Exception:
+            pass
+
     # ── Internos ──────────────────────────────────────────────────────────────
 
     def _compute_embedding(self, image: np.ndarray) -> np.ndarray | None:
@@ -112,15 +119,16 @@ class FaceRecognizer:
 
     def _vote(self, query: np.ndarray) -> tuple[str, float]:
         """
-        Sistema de votação: para cada usuário, calcula a porcentagem de embeddings
-        cadastrados com distância cosseno ≤ DISTANCE_THRESHOLD.
-        Retorna (nome_do_melhor_candidato, confiança_em_%).
+        Sistema de votação vetorizado: distância cosseno calculada em batch para todos
+        os embeddings de cada usuário de uma vez (sem loop Python por embedding).
         """
         best_name = ""
         best_confidence = 0.0
+        norm_q = np.linalg.norm(query)
 
         for name, stored in self._embeddings.items():
-            distances = np.array([_cosine_distance(query, ref) for ref in stored])
+            dots = stored @ query                              # (N,)
+            distances = 1.0 - dots / (self._norms[name] * norm_q + 1e-10)
             votes = int(np.sum(distances <= DISTANCE_THRESHOLD))
             confidence = (votes / len(stored)) * 100.0
             log.debug(f"  {name}: {votes}/{len(stored)} votos → {confidence:.1f}%")

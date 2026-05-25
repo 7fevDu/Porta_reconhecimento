@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro — Sistema de Reconhecimento Facial</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div id="app">
+
+    <!-- ─── HEADER ──────────────────────────────────────────────────────────── -->
+    <header class="header">
+        <div class="brand">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span>Zanaflex<strong>Access</strong></span>
+        </div>
+
+        <nav class="steps-nav">
+            <div class="step-item active" id="nav-1">
+                <div class="step-circle">1</div>
+                <span>Dados</span>
+            </div>
+            <div class="step-line" id="line-12"></div>
+            <div class="step-item" id="nav-2">
+                <div class="step-circle">2</div>
+                <span>Fotos</span>
+            </div>
+            <div class="step-line" id="line-23"></div>
+            <div class="step-item" id="nav-3">
+                <div class="step-circle">3</div>
+                <span>Concluído</span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- ─── MAIN ─────────────────────────────────────────────────────────────── -->
+    <main class="main">
+
+        <!-- ETAPA 1 — Dados do usuário -->
+        <section id="step-1" class="step active">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Dados do Usuário</h2>
+                    <p>Preencha as informações do colaborador para o cadastro no sistema de acesso.</p>
+                </div>
+                <form id="form-dados" novalidate>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="nome">Nome completo <span class="req">*</span></label>
+                            <input id="nome" name="nome" type="text" placeholder="Ex: João Silva" autocomplete="off" required>
+                        </div>
+                        <div class="field">
+                            <label for="matricula">Matrícula</label>
+                            <input id="matricula" name="matricula" type="text" placeholder="Ex: 00123">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="field">
+                            <label for="setor">Setor <span class="req">*</span></label>
+                            <input id="setor" name="setor" type="text" placeholder="Ex: Tecnologia" required>
+                        </div>
+                        <div class="field">
+                            <label for="cargo">Cargo</label>
+                            <input id="cargo" name="cargo" type="text" placeholder="Ex: Analista">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="nivel_acesso">Nível de Acesso <span class="req">*</span></label>
+                        <select id="nivel_acesso" name="nivel_acesso">
+                            <option value="colaborador">Colaborador</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="gerente">Gerente</option>
+                            <option value="administrador">Administrador</option>
+                            <option value="visitante">Visitante</option>
+                        </select>
+                    </div>
+                    <div id="form-error" class="alert alert-error hidden"></div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            Próximo: Captura de Fotos
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ETAPA 2 — Captura de fotos -->
+        <section id="step-2" class="step">
+            <div class="capture-layout">
+
+                <!-- Câmera -->
+                <div class="camera-side">
+                    <div class="camera-wrapper">
+                        <video id="video" autoplay muted playsinline></video>
+                        <div class="face-guide"></div>
+                        <div id="flash" class="flash"></div>
+                        <div class="cam-badge">
+                            <span class="dot-live"></span> AO VIVO
+                        </div>
+                    </div>
+                    <button id="btn-capturar" class="btn btn-capture" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M20 7h-3.2A2 2 0 0017 5.6L15.4 4H8.6L7 5.6A2 2 0 015.2 7H4a2 2 0 00-2 2v9a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z"/>
+                        </svg>
+                        Capturar Foto
+                    </button>
+                    <div class="thumbs" id="thumbs"></div>
+                </div>
+
+                <!-- Painel lateral -->
+                <div class="info-side">
+                    <h2>Captura de Fotos</h2>
+                    <div class="user-badge" id="cap-nome"></div>
+
+                    <div class="progress-box">
+                        <div class="progress-nums">
+                            <span id="foto-count" class="num-big">0</span>
+                            <span class="num-sep">/ 30</span>
+                        </div>
+                        <div class="track">
+                            <div id="prog-fill" class="fill" style="width:0%"></div>
+                            <div class="marker" title="Mínimo (20)"></div>
+                        </div>
+                        <p class="track-hint">mínimo 20 fotos &nbsp;·&nbsp; recomendado 30</p>
+                    </div>
+
+                    <div class="instructions">
+                        <p class="instructions-title">Instruções</p>
+                        <ul>
+                            <li>Centralize o rosto no guia oval</li>
+                            <li>Garanta boa iluminação no rosto</li>
+                            <li>Varie levemente a posição entre capturas</li>
+                            <li>Evite acessórios que cubram o rosto</li>
+                            <li>Mantenha expressão natural</li>
+                        </ul>
+                    </div>
+
+                    <div id="cap-msg" class="cap-msg"></div>
+
+                    <div class="side-actions">
+                        <button id="btn-finalizar" class="btn btn-primary btn-lg" disabled>
+                            Finalizar Cadastro
+                        </button>
+                        <button id="btn-voltar" class="btn btn-ghost">← Voltar</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ETAPA 3 — Resultado -->
+        <section id="step-3" class="step">
+
+            <div id="scr-processing" class="result-screen">
+                <div class="spinner"></div>
+                <h2>Processando Cadastro</h2>
+                <p>Computando os dados biométricos de <strong id="proc-nome"></strong>.<br>Isso pode levar alguns minutos…</p>
+            </div>
+
+            <div id="scr-success" class="result-screen hidden">
+                <div class="icon-ok">
+                    <svg viewBox="0 0 52 52" class="checkmark">
+                        <circle class="ck-circle" cx="26" cy="26" r="25" fill="none"/>
+                        <path class="ck-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                    </svg>
+                </div>
+                <h2>Cadastro Concluído!</h2>
+                <p id="ok-msg"></p>
+                <div id="ok-details" class="details-grid"></div>
+                <button id="btn-novo" class="btn btn-primary btn-lg">Cadastrar Novo Usuário</button>
+            </div>
+
+            <div id="scr-error" class="result-screen hidden">
+                <div class="icon-err">✕</div>
+                <h2>Erro no Processamento</h2>
+                <p>Ocorreu um erro ao treinar o modelo. Verifique os logs e tente novamente.</p>
+                <button id="btn-retry" class="btn btn-secondary">Tentar Novamente</button>
+            </div>
+
+        </section>
+
+    </main>
+</div>
+
+<canvas id="cap-canvas" style="display:none"></canvas>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -15,5 +15,11 @@ pyserial
 # Classificador para modelo treinado
 scikit-learn
 
+# Configuração
+pyyaml
+
+# Servidor web de cadastro
+flask
+
 # Testes
 pytest

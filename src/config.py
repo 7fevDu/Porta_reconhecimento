@@ -1,36 +1,34 @@
 from pathlib import Path
+import yaml
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+_CONFIG_PATH = BASE_DIR / "config" / "settings.yaml"
 
-# ── Dados ────────────────────────────────────────────────────────────────────
-USERS_DIR = BASE_DIR / "data_base" / "users"
-EMBEDDINGS_DIR = BASE_DIR / "data_base" / "embeddings"
-METADATA_PATH = EMBEDDINGS_DIR / "metadata.json"
+with open(_CONFIG_PATH, encoding="utf-8") as _f:
+    _cfg = yaml.safe_load(_f)
+
+# ── Paths ─────────────────────────────────────────────────────────────────────
+USERS_DIR      = BASE_DIR / _cfg["paths"]["users_dir"]
+EMBEDDINGS_DIR = BASE_DIR / _cfg["paths"]["embeddings_dir"]
+METADATA_PATH  = EMBEDDINGS_DIR / _cfg["paths"]["metadata_file"]
+MEDIAPIPE_MODEL = str(BASE_DIR / _cfg["paths"]["mediapipe_model"])
 
 # ── Modelo FaceNet ────────────────────────────────────────────────────────────
-FACENET_MODEL = "Facenet512"
-DETECTOR_BACKEND = "opencv"
-
-# Distância cosseno máxima para que um embedding individual seja contado como "voto a favor".
-# 0.0 = idêntico, 1.0 = completamente diferente. Mais alto = mais tolerante.
-# Câmera de corredor justifica ser mais permissivo (0.40).
-DISTANCE_THRESHOLD = 0.40
-
-# Percentual mínimo de embeddings cadastrados que devem votar a favor para conceder acesso.
-# Ex.: Eduardo tem 45 fotos → pelo menos 80% (≥36) devem ter distância ≤ DISTANCE_THRESHOLD.
-CONFIDENCE_THRESHOLD = 60.0  # soma mínima 180 / 300 pontos
+FACENET_MODEL      = _cfg["model"]["facenet"]
+DETECTOR_BACKEND   = _cfg["model"]["detector_backend"]
+DISTANCE_THRESHOLD = _cfg["model"]["distance_threshold"]
+CONFIDENCE_THRESHOLD = _cfg["model"]["confidence_threshold"]
 
 # ── Câmera ────────────────────────────────────────────────────────────────────
-CAMERA_INDEX = 1
-FRAME_WIDTH = 640
-FRAME_HEIGHT = 480
+CAMERA_INDEX = _cfg["camera"]["index"]
+FRAME_WIDTH  = _cfg["camera"]["width"]
+FRAME_HEIGHT = _cfg["camera"]["height"]
 
 # ── Arduino / Porta ───────────────────────────────────────────────────────────
-SERIAL_PORT = "COM3"
-SERIAL_BAUDRATE = 9600
-DOOR_OPEN_SECONDS = 5      # tempo que a porta fica aberta
+SERIAL_PORT       = _cfg["door"]["serial_port"]
+SERIAL_BAUDRATE   = _cfg["door"]["baudrate"]
+DOOR_OPEN_SECONDS = _cfg["door"]["open_seconds"]
 
 # ── Liveness detection ────────────────────────────────────────────────────────
-MEDIAPIPE_MODEL = str(BASE_DIR / "models" / "face_landmarker.task")
-EYE_BLINK_THRESHOLD = 0.20  # EAR abaixo desse valor = olho fechado
-BLINK_REQUIRED = 2           # piscadas mínimas para passar no anti-spoofing
+EYE_BLINK_THRESHOLD = _cfg["liveness"]["eye_blink_threshold"]
+BLINK_REQUIRED      = _cfg["liveness"]["blinks_required"]
