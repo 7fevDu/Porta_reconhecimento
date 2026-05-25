@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from pathlib import Path
 from datetime import datetime
-import base64, json, subprocess, threading, sys, yaml
+import base64, json, subprocess, threading, sys, yaml, os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,9 +14,26 @@ app = Flask(__name__)
 
 _training: dict[str, str] = {}
 
+# No Vercel o filesystem é read-only; escrita vai para /tmp (efêmero)
+_IS_VERCEL = bool(os.environ.get("VERCEL"))
+_WRITE_ROOT = Path("/tmp") if _IS_VERCEL else BASE_DIR
+
 
 def _users_dir() -> Path:
-    return BASE_DIR / _cfg["paths"]["users_dir"]
+    d = _WRITE_ROOT / _cfg["paths"]["users_dir"]
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+# ─── Handlers globais de erro → sempre retornam JSON ─────────────────────────
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    return jsonify({"erro": str(e)}), 500
+
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"erro": str(e)}), 404
 
 
 # ─── Páginas ──────────────────────────────────────────────────────────────────
@@ -75,8 +92,13 @@ def foto():
 def treinar():
     body = request.get_json(force=True)
     nome = (body.get("nome") or "").strip()
-    _training[nome] = "treinando"
 
+    # No Vercel não há deepface/tensorflow — simula conclusão imediata
+    if _IS_VERCEL:
+        _training[nome] = "concluido"
+        return jsonify({"ok": True, "aviso": "Modo demonstração: treinamento ML não roda no Vercel"})
+
+    _training[nome] = "treinando"
     script = BASE_DIR / "scripts" / "modelo_treino.py"
 
     def _run():
