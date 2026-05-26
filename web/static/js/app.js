@@ -92,6 +92,20 @@ async function iniciarCaptura() {
 
     goToStep(2);
 
+    // Esconde o badge "AO VIVO" até a câmera estar ativa
+    $("cam-badge").style.display = "none";
+
+    // Verifica se a API de câmera existe neste contexto
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        mostrarMsg(
+            "⚠ Câmera indisponível neste endereço. " +
+            "Acesse exatamente: http://localhost:5000 " +
+            "(não use o IP da rede — o Chrome bloqueia câmera em HTTP sem ser localhost).",
+            "warn"
+        );
+        return;
+    }
+
     try {
         state.stream = await navigator.mediaDevices.getUserMedia({
             video: { width: 640, height: 480, facingMode: "user" },
@@ -100,8 +114,17 @@ async function iniciarCaptura() {
         video.srcObject = state.stream;
         await video.play();
         $("btn-capturar").disabled = false;
-    } catch {
-        mostrarMsg("Não foi possível acessar a câmera. Verifique as permissões do navegador.", "warn");
+        $("cam-badge").style.display = "flex";
+    } catch (err) {
+        const msgs = {
+            NotAllowedError:  "Permissão negada. Clique no cadeado 🔒 na barra de endereço → Permissões do site → Câmera → Permitir.",
+            NotFoundError:    "Nenhuma câmera encontrada. Verifique se há uma câmera conectada.",
+            NotReadableError: "Câmera em uso por outro programa. Feche Zoom, Teams ou outro app que use a câmera.",
+            SecurityError:    "Contexto inseguro. Acesse via http://localhost:5000 (não pelo IP da rede).",
+            OverconstrainedError: "Câmera não suporta a resolução solicitada.",
+        };
+        const detalhe = msgs[err.name] || `Erro: ${err.name} — ${err.message}`;
+        mostrarMsg("⚠ " + detalhe, "warn");
     }
 }
 
