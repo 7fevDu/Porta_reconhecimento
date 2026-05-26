@@ -133,17 +133,12 @@ def usuarios():
 
 
 if __name__ == "__main__":
-    # ssl="adhoc" gera um certificado autoassinado para HTTPS local.
-    # Necessário para o navegador liberar o acesso à câmera fora do localhost.
-    use_ssl = _web.get("ssl", True) and not _IS_VERCEL
-    ssl_context = "adhoc" if use_ssl else None
-
-    proto = "https" if use_ssl else "http"
-    print(f"\n  ZanaflexAccess rodando em {proto}://localhost:{_web.get('port', 5000)}\n")
+    port = _web.get("port", 5000)
+    print(f"\n  ZanaflexAccess rodando em http://localhost:{port}")
+    print(f"  Use SEMPRE 'localhost', não o IP da rede (câmera exige contexto seguro)\n")
 
     app.run(
         host=_web.get("host", "0.0.0.0"),
-        port=_web.get("port", 5000),
+        port=port,
         debug=_web.get("debug", False),
-        ssl_context=ssl_context,
     )

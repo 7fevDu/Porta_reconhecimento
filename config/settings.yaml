@@ -28,6 +28,5 @@ web:
   host: "0.0.0.0"
   port: 5000
   debug: false
-  ssl: true          # HTTPS local — necessário para o navegador liberar a câmera
   min_photos: 20
   target_photos: 30
